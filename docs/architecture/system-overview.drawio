@@ -1,0 +1,181 @@
+<mxfile host="app.diagrams.net" agent="Codex / FlowJury">
+  <diagram id="flowjury-overall" name="FlowJury Overall Architecture">
+    <mxGraphModel dx="3309" dy="941" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" background="light-dark(#ffffff, #121212)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=28;fontStyle=1;fontColor=#2D3748;" value="⚖️  FlowJury — Overall Project Architecture" vertex="1">
+          <mxGeometry height="50" width="900" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;fontColor=#5F6B7A;" value="Reasoning-first DataHub pipeline investigator • one pipeline packet at a time • human-controlled actions" vertex="1">
+          <mxGeometry height="30" width="1100" x="42" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="knowledge-zone" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#FFF9E6;strokeColor=#E6C76A;dashed=1;dashPattern=8 6;opacity=70;" value="" vertex="1">
+          <mxGeometry height="145" width="585" x="690" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="knowledge-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#8A6D1D;" value="KNOWLEDGE AVAILABLE BEFORE REASONING" vertex="1">
+          <mxGeometry height="25" width="330" x="715" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="skills" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=15;fontColor=#5B4A16;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:26px&quot;&gt;📚&lt;/div&gt;&lt;b&gt;Business Skills&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;router + specialist policies&lt;br&gt;versioned SKILL.md files&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="235" x="720" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="memory" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=15;fontColor=#5B4A16;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:26px&quot;&gt;🧠&lt;/div&gt;&lt;b&gt;Investigation Memory&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;SQLite episodes + temporal diffs&lt;br&gt;history is a lead, never proof&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="260" x="985" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="data-zone-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#355B7A;" value="DATAHUB + DETERMINISTIC CONTEXT" vertex="1">
+          <mxGeometry height="25" width="300" x="45" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="datahub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontSize=15;fontColor=#23445F;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:32px&quot;&gt;🗄️&lt;/div&gt;&lt;b&gt;DataHub Context Graph&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;flows • jobs • datasets&lt;br&gt;usage • runs • owners • tags&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="200" x="40" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="collector" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=15;fontColor=#2F5A2D;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🔎&lt;/div&gt;&lt;b&gt;Evidence Collector&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;FlowJuryClient + gather_evidence&lt;br&gt;read-only normalization&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="220" x="285" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="evidence" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=15;fontColor=#2F5A2D;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🧩&lt;/div&gt;&lt;b&gt;Evidence Model&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;models.py facts&lt;br&gt;TRUE / FALSE / UNKNOWN&lt;br&gt;no verdict chosen here&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="200" x="550" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="bootstrap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=15;fontColor=#2F5A2D;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🎒&lt;/div&gt;&lt;b&gt;Bootstrap Packet&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;current facts + skill summaries&lt;br&gt;full router + compact memory&lt;br&gt;created once per pipeline&lt;/font&gt;" vertex="1">
+          <mxGeometry height="150" width="220" x="795" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="graph-zone" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#F4ECF7;strokeColor=#9673A6;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="455" width="345" x="1030" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="graph-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#684A75;" value="LANGGRAPH RUNTIME • exactly 3 nodes" vertex="1">
+          <mxGeometry height="25" width="285" x="1080" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="planner" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=15;fontColor=#51395B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🧭&lt;/div&gt;&lt;b&gt;1. Planner&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;select skills • find gaps&lt;br&gt;submit reasoned proposal&lt;/font&gt;" vertex="1">
+          <mxGeometry height="115" width="170" x="1080" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="executor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=15;fontColor=#51395B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🛠️&lt;/div&gt;&lt;b&gt;2. Executor&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;run selected tools&lt;br&gt;validate citations + safety&lt;/font&gt;" vertex="1">
+          <mxGeometry height="115" width="170" x="1190" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="skeptic" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=15;fontColor=#6C2E2B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🧐&lt;/div&gt;&lt;b&gt;3. Skeptic&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;only KILL / REDUNDANT&lt;br&gt;challenge compact dossier&lt;/font&gt;" vertex="1">
+          <mxGeometry height="115" width="165" x="1045" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="safety" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=15;fontColor=#6C2E2B;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🛡️&lt;/div&gt;&lt;b&gt;Safety Protocol&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;Python helper used by executor&lt;br&gt;schema • citations • KILL checks&lt;br&gt;fail closed to UNKNOWN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="165" width="145" x="1435" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="proposal" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=15;fontColor=#6B4B00;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:28px&quot;&gt;📋&lt;/div&gt;&lt;b&gt;Reviewable Proposal&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;verdict • confidence&lt;br&gt;evidence • risks • next action&lt;/font&gt;" vertex="1">
+          <mxGeometry height="125" width="155" x="1425" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="human" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=15;fontColor=#6B4B00;align=center;verticalAlign=middle;spacing=8;" value="&lt;div style=&quot;font-size:30px&quot;&gt;👩‍💻&lt;/div&gt;&lt;b&gt;Human Approval&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;FlowJury never stops a job&lt;/font&gt;" vertex="1">
+          <mxGeometry height="105" width="155" x="1425" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="tools-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#355B7A;" value="READ-ONLY EVIDENCE TOOLBOX — chosen only when it can change the decision" vertex="1">
+          <mxGeometry height="25" width="600" x="45" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="dag" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#EAF3FA;strokeColor=#6C8EBF;fontSize=13;fontColor=#23445F;align=center;verticalAlign=middle;" value="🧾&lt;br&gt;&lt;b&gt;DAG Source&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;semantic code clues&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="150" x="45" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="search" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#EAF3FA;strokeColor=#6C8EBF;fontSize=13;fontColor=#23445F;align=center;verticalAlign=middle;" value="🔍&lt;br&gt;&lt;b&gt;Catalog Search&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;focused query&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="150" x="215" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="lineage" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#EAF3FA;strokeColor=#6C8EBF;fontSize=13;fontColor=#23445F;align=center;verticalAlign=middle;" value="🕸️&lt;br&gt;&lt;b&gt;Lineage Trace&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;all outputs • 2 hops&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="150" x="385" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="peers" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#EAF3FA;strokeColor=#6C8EBF;fontSize=13;fontColor=#23445F;align=center;verticalAlign=middle;" value="👯&lt;br&gt;&lt;b&gt;Peer Evidence&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;redundancy comparison&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="150" x="555" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="blast" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#EAF3FA;strokeColor=#6C8EBF;fontSize=13;fontColor=#23445F;align=center;verticalAlign=middle;" value="💥&lt;br&gt;&lt;b&gt;Blast Radius&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;deterministic impact scan&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="165" x="725" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="json" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=14;fontStyle=1;fontColor=#6B4B00;align=center;verticalAlign=middle;" value="📦  JSON audit output" vertex="1">
+          <mxGeometry height="60" width="190" x="1185" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="writeback" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=14;fontStyle=1;fontColor=#6B4B00;align=center;verticalAlign=middle;" value="🏷️&amp;nbsp;&lt;div&gt;DataHub proposal write-back&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="190" x="1400" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=14;fillColor=#FFF9E6;strokeColor=#E6C76A;fontSize=13;fontColor=#6B5817;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="💡 external_sink is a catalog fact, not a switch. FALSE does not prove that hidden Kafka, API, file, feature-store, or reverse-ETL consumers are absent." vertex="1">
+          <mxGeometry height="78" width="845" x="45" y="735" as="geometry" />
+        </mxCell>
+        <mxCell id="e-dh-collector" edge="1" parent="1" source="datahub" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#6C8EBF;fontSize=11;labelBackgroundColor=#FFFFFF;" target="collector" value="all pipelines">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-collector-evidence" edge="1" parent="1" source="collector" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82B366;fontSize=11;labelBackgroundColor=#FFFFFF;" target="evidence" value="normalized facts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-evidence-bootstrap" edge="1" parent="1" source="evidence" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82B366;fontSize=11;labelBackgroundColor=#FFFFFF;" target="bootstrap" value="one pipeline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-skills-bootstrap" edge="1" parent="1" source="skills" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D6B656;fontSize=11;labelBackgroundColor=#FFFFFF;" target="bootstrap" value="summaries + router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-memory-bootstrap" edge="1" parent="1" source="memory" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D6B656;fontSize=11;labelBackgroundColor=#FFFFFF;" target="bootstrap" value="recall once">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-bootstrap-planner" edge="1" parent="1" source="bootstrap" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="planner" value="initial context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-planner-executor" edge="1" parent="1" source="planner" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="executor" value="focused plan">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1165" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-executor-planner" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;entryX=0.75;entryY=1;" target="planner" value="observations">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1320" y="465" />
+              <mxPoint x="1207.5" y="465" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-executor-skeptic" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#B85450;fontSize=11;labelBackgroundColor=#FFFFFF;" target="skeptic" value="risky proposal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1275" y="657.5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-executor-safety" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeWidth=2;strokeColor=#B85450;fontSize=11;labelBackgroundColor=#FFFFFF;" target="safety" value="guardrail helper">
+          <mxGeometry relative="1" x="0.5204" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1370" y="542.5" />
+              <mxPoint x="1370" y="480" />
+              <mxPoint x="1502.5" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-graph-proposal" edge="1" parent="1" source="graph-zone" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=11;labelBackgroundColor=#FFFFFF;" target="proposal" value="final graph result">
+          <mxGeometry relative="1" x="0.0008" y="20" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-proposal-human" edge="1" parent="1" source="proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=11;labelBackgroundColor=#FFFFFF;" target="human" value="review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-executor-tools" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeWidth=2;strokeColor=#6C8EBF;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.7;entryX=1;entryY=0.5;" target="blast" value="invoke selected tools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-tools-datahub" edge="1" parent="1" source="dag" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeWidth=2;strokeColor=#6C8EBF;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=1;entryX=0.5;entryY=1;libavoidRouting=1;" target="datahub" value="read current context">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="29" y="665" />
+              <mxPoint x="29" y="483" />
+              <mxPoint x="140" y="483" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-proposal-memory" edge="1" parent="1" source="proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeWidth=2;strokeColor=#D6B656;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;entryX=1;entryY=0.5;" target="memory" value="record episode after graph">
+          <mxGeometry relative="1" x="0.3061" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1410.05" y="490" />
+              <mxPoint x="1410.05" y="192.53" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-human-json" edge="1" parent="1" source="human" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=11;labelBackgroundColor=#FFFFFF;" target="json" value="export">
+          <mxGeometry relative="1" x="-0.1235" y="7" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-human-writeback" edge="1" parent="1" source="human" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=11;labelBackgroundColor=#FFFFFF;" target="writeback" value="explicit opt-in">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
