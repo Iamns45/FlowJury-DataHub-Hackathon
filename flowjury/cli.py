@@ -25,7 +25,7 @@ from flowjury.memory.store import InvestigationMemory
 from flowjury.settings import (
     DATAHUB_GMS_TOKEN,
     DATAHUB_GMS_URL,
-    DEFAULT_MAX_PLANNING_CYCLES,
+    DEFAULT_MAX_SUPERVISION_CYCLES,
     DEFAULT_MEMORY_DB,
     DEFAULT_SKILLS_DIR,
 )
@@ -59,14 +59,16 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--pipeline", help="Assess one pipeline name (case-insensitive).")
     parser.add_argument(
+        "--max-supervision-cycles",
         "--max-planning-cycles",
         "--max-rounds",
-        dest="max_planning_cycles",
+        dest="max_supervision_cycles",
         type=int,
-        default=DEFAULT_MAX_PLANNING_CYCLES,
+        default=DEFAULT_MAX_SUPERVISION_CYCLES,
         help=(
-            "Maximum planner cycles per pipeline "
-            f"(default: {DEFAULT_MAX_PLANNING_CYCLES}; --max-rounds remains an alias)."
+            "Maximum supervisor cycles per pipeline "
+            f"(default: {DEFAULT_MAX_SUPERVISION_CYCLES}; the older "
+            "--max-planning-cycles and --max-rounds names remain aliases)."
         ),
     )
     parser.add_argument(
@@ -97,8 +99,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Write separate flowjury_agent_* proposal metadata to DataHub. Never changes jobs.",
     )
     args = parser.parse_args(argv)
-    if not 1 <= args.max_planning_cycles <= 20:
-        parser.error("--max-planning-cycles must be between 1 and 20")
+    if not 1 <= args.max_supervision_cycles <= 20:
+        parser.error("--max-supervision-cycles must be between 1 and 20")
     return args
 
 
@@ -156,7 +158,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 context,
                 skills,
                 evidence,
-                args.max_planning_cycles,
+                args.max_supervision_cycles,
                 memory=memory,
             )
         except Exception as exc:

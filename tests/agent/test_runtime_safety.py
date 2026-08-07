@@ -112,22 +112,22 @@ def test_kill_is_blocked_for_external_or_protected_pipeline():
     assert any("protection or external-sink" in error for error in errors)
 
 
-def test_langgraph_contains_planner_executor_and_skeptic_only():
+def test_langgraph_contains_supervisor_executor_and_skeptic_only():
     evidence = SimpleNamespace(pipeline="test")
     graph = agent.build_investigation_graph(None, None, None, evidence, 8)
-    assert graph.nodes == {"planner", "executor", "skeptic_review"}
-    assert ("START", "planner") in graph.edges
-    assert ("planner", "planner") in graph.edges
-    assert ("planner", "executor") in graph.edges
-    assert ("executor", "planner") in graph.edges
+    assert graph.nodes == {"supervisor", "executor", "skeptic_review"}
+    assert ("START", "supervisor") in graph.edges
+    assert ("supervisor", "supervisor") in graph.edges
+    assert ("supervisor", "executor") in graph.edges
+    assert ("executor", "supervisor") in graph.edges
     assert ("executor", "skeptic_review") in graph.edges
-    assert ("planner", "END") in graph.edges
+    assert ("supervisor", "END") in graph.edges
     assert ("executor", "END") in graph.edges
     assert ("skeptic_review", "END") in graph.edges
 
 
-def test_planner_cannot_re_request_bootstrapped_context():
-    names = {tool["name"] for tool in agent.PLANNER_TOOLS}
+def test_supervisor_cannot_re_request_bootstrapped_context():
+    names = {tool["name"] for tool in agent.SUPERVISOR_TOOLS}
     assert "list_business_skills" not in names
     assert "recall_investigation_memory" not in names
     assert "load_business_skill" in names
@@ -350,7 +350,7 @@ def test_missing_investigation_cannot_be_format_repaired():
     )
 
 
-def test_planner_handles_structured_repair_without_an_extra_graph_node():
+def test_supervisor_handles_structured_repair_without_an_extra_graph_node():
     @dataclass
     class FakeEvidence:
         pipeline: str = "test pipeline"
@@ -377,24 +377,24 @@ def test_planner_handles_structured_repair_without_an_extra_graph_node():
     messages = FakeMessages()
     llm_client = SimpleNamespace(messages=messages)
     graph = agent.build_investigation_graph(
-        llm_client, None, None, FakeEvidence(), max_planning_cycles=8
+        llm_client, None, None, FakeEvidence(), max_supervision_cycles=8
     )
     state = {
         "messages": [{"role": "user", "content": "repair the proposal"}],
         "observations": BASE_OBSERVATIONS,
-        "planning_cycles": 3,
+        "supervision_cycles": 3,
         "candidate_payload": {"recommendation": "KEEP", "confidence": 0.8},
         "validation_errors": ["summary must be non-empty"],
         "repair_attempts": 0,
         "repair_mode": False,
     }
-    planned = graph.functions["planner"](state)
-    repaired = graph.functions["executor"]({**state, **planned})
+    supervised = graph.functions["supervisor"](state)
+    repaired = graph.functions["executor"]({**state, **supervised})
 
     assert repaired["result"].recommendation == "KEEP"
     assert repaired["validation_errors"] == []
-    assert planned["repair_attempts"] == 1
-    assert planned["repair_mode"] is True
+    assert supervised["repair_attempts"] == 1
+    assert supervised["repair_mode"] is True
     assert messages.calls[0]["tools"] == [agent.SUBMIT_TOOL]
     assert messages.calls[0]["tool_choice"] == {"type": "tool", "name": "submit_recommendation"}
     assert messages.calls[0]["temperature"] == 0
@@ -439,22 +439,22 @@ def test_budget_limit_forces_one_final_proposal_before_unknown():
         None,
         None,
         FakeEvidence(),
-        max_planning_cycles=1,
+        max_supervision_cycles=1,
     )
     state = {
         "messages": [{"role": "user", "content": "finalize from current evidence"}],
         "observations": observations,
-        "planning_cycles": 1,
+        "supervision_cycles": 1,
         "validation_errors": [],
         "repair_attempts": 0,
         "repair_mode": False,
         "finalization_attempted": False,
     }
 
-    planned = graph.functions["planner"](state)
-    executed = graph.functions["executor"]({**state, **planned})
+    supervised = graph.functions["supervisor"](state)
+    executed = graph.functions["executor"]({**state, **supervised})
 
-    assert planned["finalization_attempted"] is True
+    assert supervised["finalization_attempted"] is True
     assert messages.calls[0]["system"] == agent.FINALIZE_SYSTEM
     assert messages.calls[0]["tool_choice"] == {"type": "tool", "name": "submit_recommendation"}
     assert messages.calls[0]["temperature"] == 0
@@ -482,11 +482,13 @@ def test_executor_accepts_structurally_incomplete_runaway_proposal():
             "skills_applied": [],
         }
     )
-    graph = agent.build_investigation_graph(None, None, None, FakeEvidence(), max_planning_cycles=8)
+    graph = agent.build_investigation_graph(
+        None, None, None, FakeEvidence(), max_supervision_cycles=8
+    )
     state = {
         "messages": [{"role": "user", "content": "submit"}],
         "observations": observations,
-        "planning_cycles": 2,
+        "supervision_cycles": 2,
         "tool_blocks": [
             SimpleNamespace(
                 type="tool_use",
@@ -506,7 +508,7 @@ def test_executor_accepts_structurally_incomplete_runaway_proposal():
     assert executed["validation_errors"] == []
 
 
-def test_executor_defers_submission_until_planner_reads_same_batch_results():
+def test_executor_defers_submission_until_supervisor_reads_same_batch_results():
     @dataclass
     class FakeEvidence:
         pipeline: str = "test pipeline"
@@ -518,7 +520,7 @@ def test_executor_defers_submission_until_planner_reads_same_batch_results():
         None,
         agent.SkillRegistry(ROOT / "skills"),
         FakeEvidence(),
-        max_planning_cycles=8,
+        max_supervision_cycles=8,
     )
     blocks = [
         SimpleNamespace(
@@ -537,7 +539,7 @@ def test_executor_defers_submission_until_planner_reads_same_batch_results():
     state = {
         "messages": [{"role": "user", "content": "investigate"}],
         "observations": BASE_OBSERVATIONS,
-        "planning_cycles": 1,
+        "supervision_cycles": 1,
         "tool_blocks": blocks,
         "repair_mode": False,
     }

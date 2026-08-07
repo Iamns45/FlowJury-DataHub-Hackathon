@@ -38,7 +38,7 @@ from flowjury.integrations.llm.client import (
 )
 from flowjury.memory.store import InvestigationMemory
 from flowjury.settings import (
-    DEFAULT_MAX_PLANNING_CYCLES,
+    DEFAULT_MAX_SUPERVISION_CYCLES,
     MAX_REPAIR_ATTEMPTS,
     RISKY_VERDICTS,
 )
@@ -255,14 +255,15 @@ BOOTSTRAPPED_TOOL_NAMES = {
     "list_business_skills",
     "recall_investigation_memory",
 }
-PLANNER_TOOLS = [
+SUPERVISOR_TOOLS = [
     tool for tool in INVESTIGATION_TOOLS if tool["name"] not in BOOTSTRAPPED_TOOL_NAMES
 ] + [SUBMIT_TOOL]
 
-PLANNER_SYSTEM = """You are FlowJury's planning agent. Python has normalized DataHub metadata
-into facts but has not assigned a verdict. On every planning cycle, review the current evidence
-and tool observations, then issue a concise batch of tool calls representing the next steps. When
-the investigation is complete, call submit_recommendation instead of requesting more tools.
+SUPERVISOR_SYSTEM = """You are FlowJury's investigation supervisor. Python has normalized
+DataHub metadata into facts but has not assigned a verdict. On every supervision cycle, review
+the current evidence and tool observations, then issue a concise batch of tool calls representing
+the next steps. When the investigation is complete, call submit_recommendation instead of
+requesting more tools.
 
 Rules:
 - Bootstrap context already contains the skill catalog, full decide-pipeline-verdict router, and
@@ -275,7 +276,7 @@ Rules:
 - Load multiple specialist skills when evidence could match competing policies.
 - Do not submit a verdict in the same batch as unread evidence. First inspect the executor's
   results. Re-plan only for a failed lookup, a material contradiction, or a decision-critical gap;
-  otherwise submit the proposal on the next planning cycle.
+  otherwise submit the proposal on the next supervision cycle.
 - external_sink is one catalog fact, not a workflow switch. FALSE does not prove that a hidden
   sink is absent. Read source or lineage only when the candidate verdict or selected skill needs it.
 - Treat DAG comments as weaker evidence than executable calls and catalog facts.
@@ -284,7 +285,7 @@ Rules:
 - Treat prior verdicts as investigation leads only. Current DataHub evidence always wins.
 - KILL and REDUNDANT proposals receive a separate skeptic review after submission.
 - Missing or failed evidence supports UNKNOWN, never KILL.
-- Batch independent tool calls together to reduce planning cycles.
+- Batch independent tool calls together to reduce supervision cycles.
 - Keep progress text brief; do not expose private chain-of-thought.
 - Finish only by calling submit_recommendation with evidence citations, skills_applied, and risks.
 
@@ -292,7 +293,7 @@ The submission is a proposal only. It cannot disable or edit a pipeline.
 """
 
 REPAIR_SYSTEM = (
-    "You are FlowJury's planner repairing only a proposal's structured fields; do not perform "
+    "You are FlowJury's supervisor repairing only a proposal's structured fields; do not perform "
     "new investigation. Return exactly one submit_recommendation tool call. Use only the listed "
     "loaded_skills and allowed_evidence_sources. Every evidence item needs claim, source_tool, "
     "and observation. risks must be a JSON array, while summary and next_action must be non-empty "
@@ -301,10 +302,10 @@ REPAIR_SYSTEM = (
 )
 
 FINALIZE_SYSTEM = (
-    "You are FlowJury's planner making one final decision from an already completed evidence "
+    "You are FlowJury's supervisor making one final decision from an already completed evidence "
     "packet. Do not request new tools. Return exactly one submit_recommendation tool call. "
     "Apply the loaded business skills and current DataHub evidence, preserve their precedence, "
-    "and cite only allowed evidence sources. Do not choose UNKNOWN merely because the planning "
+    "and cite only allowed evidence sources. Do not choose UNKNOWN merely because the supervision "
     "budget ended: use it only when a decision-critical fact is genuinely missing, failed, or "
     "contradictory. Never invent facts or claim that the proposal changed a pipeline."
 )
@@ -655,10 +656,10 @@ def bootstrap_investigation_context(
     memory: Optional[InvestigationMemory],
     evidence,
 ) -> Tuple[dict, List[ToolObservation]]:
-    """Load universal context once, before the planner starts reasoning.
+    """Load universal context once, before the supervisor starts reasoning.
 
     Skill selection remains agentic: bootstrap provides only the specialist summaries and the
-    mandatory router's full policy. The planner still chooses which specialist instructions and
+    mandatory router's full policy. The supervisor still chooses which specialist instructions and
     expensive DataHub evidence to load for this pipeline.
     """
     summaries = skills.summaries()
@@ -768,9 +769,9 @@ def build_skeptic_dossier(
 ) -> dict:
     """Build a compact, current-evidence packet without replaying the full investigation.
 
-    The proposal already contains the planner's claims. The skeptic receives those claims, the
+    The proposal already contains the supervisor's claims. The skeptic receives those claims, the
     normalized current facts, the names of applied policies, and only decision-critical tool
-    results. Raw skill text, memory episodes, planner messages, and the proposal's duplicated
+    results. Raw skill text, memory episodes, supervisor messages, and the proposal's duplicated
     investigation audit trail are intentionally excluded.
     """
     loaded_skills = list(
@@ -880,10 +881,10 @@ def build_investigation_graph(
     ctx: InvestigationContext,
     skills: SkillRegistry,
     evidence,
-    max_planning_cycles: int,
+    max_supervision_cycles: int,
     memory: Optional[InvestigationMemory] = None,
 ):
-    """Compile the planner-executor loop with an optional skeptic branch."""
+    """Compile the supervisor-executor loop with an optional skeptic branch."""
 
     def accepted_proposal(
         payload: dict, observations: Sequence[ToolObservation]
@@ -936,24 +937,24 @@ def build_investigation_graph(
             ],
         }
 
-    def planner_node(state: InvestigationState) -> InvestigationState:
+    def supervisor_node(state: InvestigationState) -> InvestigationState:
         """Choose the next tool batch or submit the final proposal."""
         validation_errors = list(state.get("validation_errors", []))
         repair_mode = submission_can_be_repaired(validation_errors)
         repair_attempts = state.get("repair_attempts", 0)
-        planning_cycles = state.get("planning_cycles", 0)
+        supervision_cycles = state.get("supervision_cycles", 0)
         finalization_attempted = state.get("finalization_attempted", False)
-        budget_finalize = not repair_mode and planning_cycles >= max_planning_cycles
+        budget_finalize = not repair_mode and supervision_cycles >= max_supervision_cycles
 
         if repair_mode and repair_attempts >= MAX_REPAIR_ATTEMPTS:
             reason = (
                 f"Proposal formatting remained invalid after {MAX_REPAIR_ATTEMPTS} "
-                "planner repair attempts: " + "; ".join(validation_errors)
+                "supervisor repair attempts: " + "; ".join(validation_errors)
             )
             return {
                 "result": safe_fallback(state, reason),
                 "tool_blocks": [],
-                "planned_actions": [],
+                "supervisor_actions": [],
                 "repair_mode": False,
             }
 
@@ -961,18 +962,18 @@ def build_investigation_graph(
             return {
                 "result": safe_fallback(
                     state,
-                    f"Planning budget exhausted after {max_planning_cycles} cycles and the "
+                    f"Supervision budget exhausted after {max_supervision_cycles} cycles and the "
                     "final evidence-only submission did not produce an acceptable proposal.",
                 ),
                 "tool_blocks": [],
-                "planned_actions": [],
+                "supervisor_actions": [],
                 "repair_mode": False,
             }
 
         try:
             if repair_mode:
                 attempt = repair_attempts + 1
-                print(f"  🛠 planner repairing proposal ({attempt}/{MAX_REPAIR_ATTEMPTS})")
+                print(f"  🛠 supervisor repairing proposal ({attempt}/{MAX_REPAIR_ATTEMPTS})")
                 response = llm_client.messages.create(
                     model=LLM_NAME,
                     max_tokens=1200,
@@ -987,11 +988,11 @@ def build_investigation_graph(
                         }
                     ],
                 )
-                next_cycles = planning_cycles
+                next_cycles = supervision_cycles
                 next_repair_attempts = attempt
                 next_finalization_attempted = finalization_attempted
             elif budget_finalize:
-                print("  🧭 planning budget reached; forcing final evidence-based proposal")
+                print("  🧭 supervision budget reached; forcing final evidence-based proposal")
                 response = llm_client.messages.create(
                     model=LLM_NAME,
                     max_tokens=1200,
@@ -1006,19 +1007,19 @@ def build_investigation_graph(
                         }
                     ],
                 )
-                next_cycles = planning_cycles
+                next_cycles = supervision_cycles
                 next_repair_attempts = repair_attempts
                 next_finalization_attempted = True
             else:
-                next_cycles = planning_cycles + 1
+                next_cycles = supervision_cycles + 1
                 next_repair_attempts = repair_attempts
                 next_finalization_attempted = finalization_attempted
                 response = llm_client.messages.create(
                     model=LLM_NAME,
                     max_tokens=1600,
                     temperature=LLM_TEMPERATURE,
-                    system=PLANNER_SYSTEM,
-                    tools=PLANNER_TOOLS,
+                    system=SUPERVISOR_SYSTEM,
+                    tools=SUPERVISOR_TOOLS,
                     messages=state["messages"],
                 )
         except Exception as exc:
@@ -1029,7 +1030,7 @@ def build_investigation_graph(
                     "repair_attempts": repair_attempts + 1,
                     "repair_mode": True,
                     "tool_blocks": [],
-                    "planned_actions": [],
+                    "supervisor_actions": [],
                     "result": None,
                 }
             if budget_finalize:
@@ -1037,24 +1038,24 @@ def build_investigation_graph(
                     "result": safe_fallback(
                         state,
                         f"Final evidence-only proposal call failed after "
-                        f"{max_planning_cycles} planning cycles: {exc}",
+                        f"{max_supervision_cycles} supervision cycles: {exc}",
                     ),
                     "tool_blocks": [],
-                    "planned_actions": [],
+                    "supervisor_actions": [],
                     "repair_mode": False,
                     "finalization_attempted": True,
                 }
             return {
-                "result": safe_fallback(state, f"Planner call failed: {exc}"),
+                "result": safe_fallback(state, f"Supervisor call failed: {exc}"),
                 "tool_blocks": [],
-                "planned_actions": [],
+                "supervisor_actions": [],
                 "repair_mode": False,
             }
 
         messages = list(state["messages"])
         messages.append({"role": "assistant", "content": response.content})
         tool_blocks = [block for block in response.content if block.type == "tool_use"]
-        planned_actions = [
+        supervisor_actions = [
             {"tool": block.name, "arguments": dict(block.input)} for block in tool_blocks
         ]
 
@@ -1062,12 +1063,12 @@ def build_investigation_graph(
             if block.type == "text" and block.text.strip():
                 print(f"  🧠 {block.text.strip()}")
 
-        if planned_actions:
-            names = ", ".join(action["tool"] for action in planned_actions)
+        if supervisor_actions:
+            names = ", ".join(action["tool"] for action in supervisor_actions)
             label = (
                 "repair"
                 if repair_mode
-                else "finalize" if budget_finalize else f"plan {next_cycles}"
+                else "finalize" if budget_finalize else f"supervise {next_cycles}"
             )
             print(f"  🧭 {label}: {names}")
         else:
@@ -1083,8 +1084,8 @@ def build_investigation_graph(
 
         return {
             "messages": messages,
-            "planning_cycles": next_cycles,
-            "planned_actions": planned_actions,
+            "supervision_cycles": next_cycles,
+            "supervisor_actions": supervisor_actions,
             "tool_blocks": tool_blocks,
             "repair_attempts": next_repair_attempts,
             "repair_mode": repair_mode,
@@ -1092,17 +1093,17 @@ def build_investigation_graph(
             "result": None,
         }
 
-    def route_after_planner(
+    def route_after_supervisor(
         state: InvestigationState,
-    ) -> Literal["planner", "executor", "end"]:
+    ) -> Literal["supervisor", "executor", "end"]:
         if state.get("result") is not None:
             return "end"
         if state.get("tool_blocks"):
             return "executor"
-        return "planner"
+        return "supervisor"
 
     def executor_node(state: InvestigationState) -> InvestigationState:
-        """Execute the planner's tool batch and validate any submitted proposal."""
+        """Execute the supervisor's tool batch and validate any submitted proposal."""
         observations = list(state.get("observations", []))
         tool_results: Dict[str, str] = {}
         accepted: Optional[AgentRecommendation] = None
@@ -1116,8 +1117,8 @@ def build_investigation_graph(
             if block.name == "submit_recommendation":
                 continue
             argument = _argument(block)
-            cycle = state.get("planning_cycles", 0)
-            print(f"  🔍 execute plan {cycle}: {block.name}({argument!r})")
+            cycle = state.get("supervision_cycles", 0)
+            print(f"  🔍 execute cycle {cycle}: {block.name}({argument!r})")
             output = dispatch(ctx, skills, memory, evidence, block.name, block.input)
             observations.append(
                 ToolObservation(
@@ -1135,9 +1136,9 @@ def build_investigation_graph(
             if evidence_requested:
                 tool_results[block.id] = (
                     "Submission deferred: read the evidence returned by this executor cycle, "
-                    "then submit a supported recommendation in the next planning cycle."
+                    "then submit a supported recommendation in the next supervision cycle."
                 )
-                print("  ↩ proposal deferred until the planner reads new evidence")
+                print("  ↩ proposal deferred until the supervisor reads new evidence")
                 continue
             submission_attempted = True
             candidate_payload, normalized_fields = normalize_submission_payload(
@@ -1182,14 +1183,14 @@ def build_investigation_graph(
             if state.get("repair_mode"):
                 observations.append(
                     ToolObservation(
-                        "planner_repair",
+                        "supervisor_repair",
                         evidence.pipeline,
                         json.dumps(candidate_payload, sort_keys=True, default=str),
                         True,
                     )
                 )
                 accepted.investigation = list(observations)
-                print("  ✓ planner repair accepted")
+                print("  ✓ supervisor repair accepted")
             return {
                 "messages": messages,
                 "observations": observations,
@@ -1203,7 +1204,7 @@ def build_investigation_graph(
             if state.get("repair_mode"):
                 observations.append(
                     ToolObservation(
-                        "planner_repair",
+                        "supervisor_repair",
                         evidence.pipeline,
                         json.dumps(candidate_payload or {}, sort_keys=True, default=str),
                         False,
@@ -1233,10 +1234,10 @@ def build_investigation_graph(
 
     def route_after_executor(
         state: InvestigationState,
-    ) -> Literal["planner", "skeptic", "end"]:
+    ) -> Literal["supervisor", "skeptic", "end"]:
         result = state.get("result")
         if result is None:
-            return "planner"
+            return "supervisor"
         return "skeptic" if result.recommendation in RISKY_VERDICTS else "end"
 
     def skeptic_review_node(state: InvestigationState) -> InvestigationState:
@@ -1263,8 +1264,8 @@ def build_investigation_graph(
                 system=(
                     "You are FlowJury's independent skeptic. Try to falsify the proposed "
                     "KILL or REDUNDANT verdict using only the supplied compact decision dossier. "
-                    "Do not repeat the planner's investigation or request tools. Prior memory is "
-                    "not current proof. BLOCK if a hidden "
+                    "Do not repeat the supervisor's investigation or request tools. Prior "
+                    "memory is not current proof. BLOCK if a hidden "
                     "consumer, protection obligation, semantic difference, failed lookup, or "
                     "missing required fact remains plausible. Do not provide chain-of-thought; "
                     "submit only the structured review."
@@ -1309,19 +1310,19 @@ def build_investigation_graph(
         }
 
     builder = StateGraph(InvestigationState)
-    builder.add_node("planner", planner_node)
+    builder.add_node("supervisor", supervisor_node)
     builder.add_node("executor", executor_node)
     builder.add_node("skeptic_review", skeptic_review_node)
-    builder.add_edge(START, "planner")
+    builder.add_edge(START, "supervisor")
     builder.add_conditional_edges(
-        "planner",
-        route_after_planner,
-        {"planner": "planner", "executor": "executor", "end": END},
+        "supervisor",
+        route_after_supervisor,
+        {"supervisor": "supervisor", "executor": "executor", "end": END},
     )
     builder.add_conditional_edges(
         "executor",
         route_after_executor,
-        {"planner": "planner", "skeptic": "skeptic_review", "end": END},
+        {"supervisor": "supervisor", "skeptic": "skeptic_review", "end": END},
     )
     builder.add_edge("skeptic_review", END)
     return builder.compile()
@@ -1332,10 +1333,10 @@ def investigate(
     ctx: InvestigationContext,
     skills: SkillRegistry,
     evidence,
-    max_planning_cycles: int = DEFAULT_MAX_PLANNING_CYCLES,
+    max_supervision_cycles: int = DEFAULT_MAX_SUPERVISION_CYCLES,
     memory: Optional[InvestigationMemory] = None,
 ) -> AgentRecommendation:
-    """Run one planner-executor investigation and persist its completed episode."""
+    """Run one supervisor-executor investigation and persist its completed episode."""
     facts = _jsonable(asdict(evidence))
     bootstrap, bootstrap_observations = bootstrap_investigation_context(
         ctx,
@@ -1353,13 +1354,13 @@ def investigate(
                     f"Bootstrap context: {json.dumps(bootstrap, sort_keys=True)}\n\n"
                     "Reason over the supplied context once. Select only the specialist "
                     "policies and decision-critical evidence that are still missing, then "
-                    "recommendation."
+                    "finish with one reviewable recommendation."
                 ),
             }
         ],
         "observations": bootstrap_observations,
-        "planning_cycles": 0,
-        "planned_actions": [],
+        "supervision_cycles": 0,
+        "supervisor_actions": [],
         "tool_blocks": [],
         "result": None,
         "candidate_payload": None,
@@ -1370,9 +1371,9 @@ def investigate(
         "skeptic_review": None,
     }
     graph = build_investigation_graph(
-        llm_client, ctx, skills, evidence, max_planning_cycles, memory=memory
+        llm_client, ctx, skills, evidence, max_supervision_cycles, memory=memory
     )
-    final_state = graph.invoke(initial, {"recursion_limit": max_planning_cycles * 4 + 20})
+    final_state = graph.invoke(initial, {"recursion_limit": max_supervision_cycles * 4 + 20})
     observations = list(final_state.get("observations", []))
     result = final_state.get("result") or fallback_recommendation(
         evidence,

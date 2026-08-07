@@ -43,12 +43,12 @@ class AgentRecommendation:
 
 
 class InvestigationState(TypedDict, total=False):
-    """Minimal state shared by the planner, executor, and skeptic nodes."""
+    """Minimal state shared by the supervisor, executor, and skeptic nodes."""
 
     messages: List[dict]
     observations: List[ToolObservation]
-    planning_cycles: int
-    planned_actions: List[dict]
+    supervision_cycles: int
+    supervisor_actions: List[dict]
     tool_blocks: List[Any]
     result: Optional[AgentRecommendation]
     candidate_payload: Optional[dict]

@@ -43,7 +43,7 @@
         <mxCell id="graph-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#684A75;" value="LANGGRAPH RUNTIME • exactly 3 nodes" vertex="1">
           <mxGeometry height="25" width="285" x="1080" y="280" as="geometry" />
         </mxCell>
-        <mxCell id="planner" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=15;fontColor=#51395B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🧭&lt;/div&gt;&lt;b&gt;1. Planner&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;select skills • find gaps&lt;br&gt;submit reasoned proposal&lt;/font&gt;" vertex="1">
+        <mxCell id="supervisor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=15;fontColor=#51395B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🧭&lt;/div&gt;&lt;b&gt;1. Supervisor&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;select skills • find gaps&lt;br&gt;submit reasoned proposal&lt;/font&gt;" vertex="1">
           <mxGeometry height="115" width="170" x="1080" y="315" as="geometry" />
         </mxCell>
         <mxCell id="executor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=15;fontColor=#51395B;align=center;verticalAlign=middle;spacing=6;" value="&lt;div style=&quot;font-size:28px&quot;&gt;🛠️&lt;/div&gt;&lt;b&gt;2. Executor&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot;&gt;run selected tools&lt;br&gt;validate citations + safety&lt;/font&gt;" vertex="1">
@@ -103,17 +103,17 @@
         <mxCell id="e-memory-bootstrap" edge="1" parent="1" source="memory" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D6B656;fontSize=11;labelBackgroundColor=#FFFFFF;" target="bootstrap" value="recall once">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e-bootstrap-planner" edge="1" parent="1" source="bootstrap" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="planner" value="initial context">
+        <mxCell id="e-bootstrap-supervisor" edge="1" parent="1" source="bootstrap" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="supervisor" value="initial context">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e-planner-executor" edge="1" parent="1" source="planner" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="executor" value="focused plan">
+        <mxCell id="e-supervisor-executor" edge="1" parent="1" source="supervisor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;" target="executor" value="focused actions">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1165" y="490" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e-executor-planner" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;entryX=0.75;entryY=1;" target="planner" value="observations">
+        <mxCell id="e-executor-supervisor" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673A6;fontSize=11;labelBackgroundColor=#FFFFFF;entryX=0.75;entryY=1;" target="supervisor" value="observations">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1320" y="465" />

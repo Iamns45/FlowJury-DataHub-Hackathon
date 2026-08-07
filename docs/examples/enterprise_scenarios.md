@@ -17,13 +17,13 @@ SQL consumers. It can look like an abandoned ingestion job.
 
 **Expected LangGraph dry run:**
 
-1. `planner` uses the bootstrapped catalog/router to select the uncertain-pipeline skill.
+1. `supervisor` uses the bootstrapped catalog/router to select the uncertain-pipeline skill.
 2. The agent sees zero downstream SQL consumers but treats that as incomplete evidence.
 3. `executor` loads the skills and fetches the DAG source requested by the plan.
 4. Source inspection finds Kafka producers for fraud, support, and search topics.
 5. `simulate_retirement` identifies a non-catalog Kafka consumer signal.
-6. The planner reads those results and ends with `KEEP`, citing the source and external delivery
-   risk.
+6. The supervisor reads those results and ends with `KEEP`, citing the source and external
+   delivery risk.
 
 **Why this matters:** Kafka consumers usually do not appear as warehouse-query consumers.
 

@@ -12,7 +12,7 @@ diagrams.
    behind an adapter in this directory.
 3. `flowjury/analysis` turns metadata into evidence or impact summaries; it
    does not invoke the reasoning model.
-4. `flowjury/agent` owns planning, execution, validation, skeptic review, and
+4. `flowjury/agent` owns supervision, execution, validation, skeptic review, and
    skill loading. It consumes normalized evidence instead of raw SDK objects.
 5. `flowjury/cli.py` is the composition root. It is the only place that wires
    all production components together for a complete application run.
@@ -35,5 +35,5 @@ diagrams.
 
 - `system-overview.drawio` shows DataHub ingestion, evidence normalization,
   agent reasoning, memory, proposal output, and optional DataHub write-back.
-- `langgraph.drawio` shows planner → executor routing and the conditional
+- `langgraph.drawio` shows supervisor → executor routing and the conditional
   skeptic review for `KILL` and `REDUNDANT` proposals.

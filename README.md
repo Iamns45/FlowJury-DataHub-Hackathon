@@ -48,9 +48,9 @@ business rule by reviewing one versioned `SKILL.md`, not by editing orchestratio
 
 **2. Agentic does not mean unbounded.** Every signal is `TRUE`, `FALSE`, or `UNKNOWN`, and missing
 evidence never becomes "unused." The executor validates schema, loaded skills, citations, tool
-budget, and retirement checks. The planner handles two bounded format-repair attempts internally;
-missing investigation work returns to the plan-execute loop. The agent can choose the verdict; it
-cannot disable a job, and failures fall back to `UNKNOWN`.
+budget, and retirement checks. The supervisor handles two bounded format-repair attempts
+internally; missing investigation work returns to the supervisor-executor loop. The agent can
+choose the verdict; it cannot disable a job, and failures fall back to `UNKNOWN`.
 
 **3. Memory is change-aware.** Each investigation is stored as a durable episode with a
 fingerprint of the normalized evidence. On the next run, FlowJury reports exactly which fields
@@ -82,40 +82,41 @@ DataHub ─→ Python normalization ─→ bootstrap once
                                                │
                                                ▼
                          ┌──────────────────────────────┐
-                         │ PLANNER                      │
+                         │ SUPERVISOR                   │
                          │ reason over current context  │
                          │ choose only missing evidence │
                          │ or submit final proposal      │
                          └──────────────┬───────────────┘
-                                        │ plan
+                                        │ actions
                                         ▼
                          ┌──────────────────────────────┐
                          │ EXECUTOR                     │
                          │ run tools + validate output  │
                          └──────────────┬───────────────┘
                                         │ observations
-                                        └──────────────→ planner
+                                        └──────────────→ supervisor
 
-Planner completes ── normal verdict ─────────────────────────→ proposal
-                  └─ KILL / REDUNDANT ─→ compact dossier
-                                           └─ SKEPTIC ───────→ proposal or UNKNOWN
+Supervisor completes ── normal verdict ──────────────────────→ proposal
+                     └─ KILL / REDUNDANT ─→ compact dossier
+                                              └─ SKEPTIC ────→ proposal or UNKNOWN
 
 After LangGraph ends: persist memory → JSON → optional DataHub write-back
 
 Python owns: data access, schemas, budgets, audit log, safety protocol
 Skills own: business thresholds, precedence, verdict guidance
-Planner owns: which skills/tools to use and the final review verdict
+Supervisor owns: which skills/tools to use and the final review verdict
 ```
 
-FlowJury uses **LangGraph directly** with only three nodes: `planner`, `executor`, and conditional
-`skeptic_review`. Validation, proposal repair, fallback, blast-radius analysis, and memory writes
-remain ordinary Python helpers instead of graph nodes. LangChain is not required: a small LLM
-adapter owns model transport, while LangGraph supplies state and the bounded plan-execute loop.
+FlowJury uses **LangGraph directly** with only three nodes: `supervisor`, `executor`, and
+conditional `skeptic_review`. Validation, proposal repair, fallback, blast-radius analysis, and
+memory writes remain ordinary Python helpers instead of graph nodes. LangChain is not required: a
+small LLM adapter owns model transport, while LangGraph supplies state and the bounded
+supervisor-executor loop.
 
-The normal path needs two reasoning passes: first select a specialist and a focused evidence batch;
-then read those results and submit the verdict. A third planner pass happens only when a lookup
-failed, evidence conflicts, or a loaded specialist reveals a material gap. The executor refuses to
-accept a proposal submitted alongside unread evidence.
+The normal path needs two supervisor passes: first select a specialist and a focused evidence
+batch; then read those results and submit the verdict. A third pass happens only when a lookup
+failed, evidence conflicts, or a loaded specialist reveals a material gap. The executor refuses
+to accept a proposal submitted alongside unread evidence.
 
 ## Repository layout
 
@@ -199,7 +200,7 @@ summaries, loads `decide-pipeline-verdict`, and recalls compact memory once. The
 must then load relevant specialists and cite only observed evidence. A `KILL` proposal additionally
 requires source, downstream lineage, catalog search, and a blast-radius simulation. `KILL` and
 `REDUNDANT` must then pass the independent skeptic node. LangGraph routes invalid or incomplete
-proposals back to the planner until the budget is exhausted.
+proposals back to the supervisor until the budget is exhausted.
 
 `scripts/seed_demo_memory.py` makes the first demo run more illustrative by preloading seven
 explicitly historical episodes. It uses current DataHub metadata for each stored snapshot, is
@@ -253,7 +254,7 @@ replacing or extending that adapter; the public configuration contract can remai
 `LLM_TEMPERATURE` defaults to `0` because pipeline verdicts are analytical decisions where
 repeatability matters more than creative variation.
 
-Before falling back to `UNKNOWN` at the planning limit, FlowJury makes one forced evidence-only
+Before falling back to `UNKNOWN` at the supervision limit, FlowJury makes one forced evidence-only
 submission. The executor also canonicalizes recoverable proposal fields such as `risks`,
 `next_action`, and `skills_applied`; it never changes the model-selected verdict, confidence, or
 cited evidence.
