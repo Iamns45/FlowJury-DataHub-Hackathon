@@ -1,4 +1,4 @@
-# FlowJury ⚖️
+# FlowJury 
 
 **A DataHub-powered compute-waste investigator for data pipelines.** FlowJury finds
 runaway, orphaned, over-scheduled, redundant, and silently failing workflows, proves
