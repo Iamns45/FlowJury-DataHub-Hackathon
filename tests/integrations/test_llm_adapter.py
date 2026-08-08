@@ -1,6 +1,7 @@
 import importlib
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 from flowjury.integrations.llm import client as llm
 
@@ -48,6 +49,49 @@ def test_temperature_is_provider_neutral_and_configurable():
         else:
             os.environ["LLM_TEMPERATURE"] = old_temperature
         importlib.reload(llm)
+
+
+def test_transport_retries_without_temperature_and_remembers_capability():
+    class FakeMessages:
+        def __init__(self):
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            if "temperature" in kwargs:
+                raise RuntimeError("`temperature` is deprecated for this model")
+            return "accepted"
+
+    provider_messages = FakeMessages()
+    client = llm.LLMTransportAdapter(SimpleNamespace(messages=provider_messages))
+
+    assert client.messages.create(model="test", temperature=0) == "accepted"
+    assert client.messages.create(model="test", temperature=0) == "accepted"
+    assert len(provider_messages.calls) == 3
+    assert "temperature" in provider_messages.calls[0]
+    assert "temperature" not in provider_messages.calls[1]
+    assert "temperature" not in provider_messages.calls[2]
+
+
+def test_transport_does_not_retry_unrelated_model_errors():
+    class FakeMessages:
+        def __init__(self):
+            self.calls = 0
+
+        def create(self, **kwargs):
+            self.calls += 1
+            raise RuntimeError("invalid model name")
+
+    provider_messages = FakeMessages()
+    client = llm.LLMTransportAdapter(SimpleNamespace(messages=provider_messages))
+
+    try:
+        client.messages.create(model="missing", temperature=0)
+    except RuntimeError as exc:
+        assert "invalid model name" in str(exc)
+    else:
+        raise AssertionError("unrelated provider errors must propagate")
+    assert provider_messages.calls == 1
 
 
 def test_no_provider_specific_environment_names_in_runtime_entrypoints():

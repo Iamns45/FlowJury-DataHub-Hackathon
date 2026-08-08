@@ -19,6 +19,9 @@ from typing import Any, Dict, List, Optional
 
 
 _VOLATILE_EVIDENCE_FIELDS = {"current_runtime_min"}
+_LEGACY_INCOMPLETE_SUMMARY = (
+    "The skill-first investigation ended without a valid, supported proposal."
+)
 
 
 def _jsonable(value: Any) -> Any:
@@ -115,9 +118,26 @@ class InvestigationMemory:
                 observations_json TEXT NOT NULL,
                 snapshot_json TEXT NOT NULL,
                 context_fingerprint TEXT NOT NULL,
+                investigation_status TEXT NOT NULL DEFAULT 'COMPLETED',
                 recorded_at TEXT NOT NULL
             )
             """
+        )
+        columns = {
+            row["name"]
+            for row in self.connection.execute("PRAGMA table_info(investigation_memory)")
+        }
+        if "investigation_status" not in columns:
+            self.connection.execute(
+                "ALTER TABLE investigation_memory ADD COLUMN "
+                "investigation_status TEXT NOT NULL DEFAULT 'COMPLETED'"
+            )
+        # Releases before the status field stored transport/validation fallbacks as ordinary
+        # UNKNOWN episodes. Preserve those rows for audit, but exclude them from future recall.
+        self.connection.execute(
+            "UPDATE investigation_memory SET investigation_status = 'INCOMPLETE' "
+            "WHERE summary = ?",
+            (_LEGACY_INCOMPLETE_SUMMARY,),
         )
         self.connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_memory_pipeline_time "
@@ -140,7 +160,8 @@ class InvestigationMemory:
 
     def _latest(self, pipeline: str) -> Optional[sqlite3.Row]:
         return self.connection.execute(
-            "SELECT * FROM investigation_memory WHERE pipeline = ? "
+            "SELECT * FROM investigation_memory "
+            "WHERE pipeline = ? AND investigation_status = 'COMPLETED' "
             "ORDER BY recorded_at DESC, id DESC LIMIT 1",
             (pipeline,),
         ).fetchone()
@@ -204,7 +225,8 @@ class InvestigationMemory:
         domain = snapshot.get("domain")
         limit = max(1, min(int(limit), 10))
         exact = self.connection.execute(
-            "SELECT * FROM investigation_memory WHERE pipeline = ? "
+            "SELECT * FROM investigation_memory "
+            "WHERE pipeline = ? AND investigation_status = 'COMPLETED' "
             "ORDER BY recorded_at DESC, id DESC LIMIT ?",
             (pipeline, min(limit, 3)),
         ).fetchall()
@@ -217,7 +239,8 @@ class InvestigationMemory:
             pattern = f"%{escaped}%"
             related = self.connection.execute(
                 "SELECT * FROM investigation_memory "
-                "WHERE pipeline <> ? AND (pipeline LIKE ? ESCAPE '\\' "
+                "WHERE pipeline <> ? AND investigation_status = 'COMPLETED' "
+                "AND (pipeline LIKE ? ESCAPE '\\' "
                 "OR summary LIKE ? ESCAPE '\\' OR evidence_json LIKE ? ESCAPE '\\') "
                 "ORDER BY recorded_at DESC, id DESC LIMIT ?",
                 (pipeline, pattern, pattern, pattern, remaining),
@@ -230,7 +253,9 @@ class InvestigationMemory:
         remaining = limit - len(episodes)
         if remaining > 0 and domain:
             related = self.connection.execute(
-                "SELECT * FROM investigation_memory WHERE pipeline <> ? AND domain = ? "
+                "SELECT * FROM investigation_memory "
+                "WHERE pipeline <> ? AND domain = ? "
+                "AND investigation_status = 'COMPLETED' "
                 "ORDER BY recorded_at DESC, id DESC LIMIT ?",
                 (pipeline, domain, remaining),
             ).fetchall()
@@ -279,8 +304,8 @@ class InvestigationMemory:
             INSERT INTO investigation_memory (
                 run_id, pipeline, domain, verdict, confidence, summary,
                 evidence_json, risks_json, skills_json, observations_json,
-                snapshot_json, context_fingerprint, recorded_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                snapshot_json, context_fingerprint, investigation_status, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run_id,
@@ -295,6 +320,7 @@ class InvestigationMemory:
                 json.dumps(serialized_observations, sort_keys=True),
                 json.dumps(snapshot, sort_keys=True),
                 evidence_fingerprint(snapshot),
+                getattr(result, "investigation_status", "COMPLETED"),
                 datetime.now(timezone.utc).isoformat(),
             ),
         )

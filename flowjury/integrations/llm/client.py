@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
@@ -25,6 +26,46 @@ def _configured_temperature() -> float:
 LLM_TEMPERATURE = _configured_temperature()
 
 
+def _temperature_not_supported(exc: Exception) -> bool:
+    """Recognize model APIs that reject sampling-temperature controls."""
+    message = str(exc).lower()
+    markers = ("deprecated", "not supported", "unsupported", "not allowed")
+    return "temperature" in message and any(marker in message for marker in markers)
+
+
+class _MessagesAdapter:
+    """Retry once without temperature when the selected model does not accept it."""
+
+    def __init__(self, messages: Any):
+        self._messages = messages
+        self._temperature_supported = True
+
+    def create(self, **kwargs):
+        request = dict(kwargs)
+        if not self._temperature_supported:
+            request.pop("temperature", None)
+        try:
+            return self._messages.create(**request)
+        except Exception as exc:
+            if "temperature" not in request or not _temperature_not_supported(exc):
+                raise
+            self._temperature_supported = False
+            request.pop("temperature")
+            print("  ℹ selected model ignores temperature; retrying with model defaults")
+            return self._messages.create(**request)
+
+
+class LLMTransportAdapter:
+    """Expose the provider transport through FlowJury's stable client contract."""
+
+    def __init__(self, provider_client: Any):
+        self._provider_client = provider_client
+        self.messages = _MessagesAdapter(provider_client.messages)
+
+    def __getattr__(self, name: str):
+        return getattr(self._provider_client, name)
+
+
 def llm_configured() -> bool:
     return bool(LLM_API_KEY and LLM_NAME)
 
@@ -45,4 +86,4 @@ def create_llm_client():
     # Keep provider-specific transport details behind this one adapter boundary.
     from anthropic import Anthropic
 
-    return Anthropic(api_key=LLM_API_KEY)
+    return LLMTransportAdapter(Anthropic(api_key=LLM_API_KEY))

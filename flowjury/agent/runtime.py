@@ -749,6 +749,7 @@ def fallback_recommendation(
         skills_applied=[
             o.argument for o in observations if o.ok and o.tool == "load_business_skill"
         ],
+        investigation_status="INCOMPLETE",
         investigation=list(observations),
     )
 
@@ -1384,7 +1385,7 @@ def investigate(
     if result.temporal_change is None and memory is not None:
         result.temporal_change = memory.compare(evidence, ctx.memory_context(evidence.pipeline))
 
-    if memory is not None:
+    if memory is not None and result.investigation_status == "COMPLETED":
         try:
             memory_id = memory.record(
                 result,
@@ -1396,5 +1397,7 @@ def investigate(
             print(f"  🧠 remembered investigation {memory_id[:8]}")
         except Exception as exc:
             print(f"  ⚠ memory write failed: {exc}")
+    elif memory is not None:
+        print("  ℹ incomplete investigation was not written to durable memory")
 
     return result

@@ -34,6 +34,8 @@ from flowjury.settings import (
 def print_recommendation(result: AgentRecommendation) -> None:
     """Render one human-readable assessment to stdout."""
     print(f"\n  RECOMMENDATION: {result.recommendation} ({result.confidence:.2f})")
+    if result.investigation_status != "COMPLETED":
+        print(f"  Status: {result.investigation_status}")
     print(f"  {result.summary}")
     print(f"  Skills: {', '.join(result.skills_applied) or '(fallback)'}")
     for item in result.evidence:
@@ -164,7 +166,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         except Exception as exc:
             result = fallback_recommendation(evidence, [], f"Agent call failed: {exc}")
 
-        if memory is not None and result.memory_id is None:
+        if (
+            memory is not None
+            and result.memory_id is None
+            and result.investigation_status == "COMPLETED"
+        ):
             try:
                 memory_context = context.memory_context(evidence.pipeline)
                 result.temporal_change = result.temporal_change or memory.compare(

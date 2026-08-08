@@ -192,6 +192,11 @@ python -m flowjury.analysis.evidence
 python -m flowjury.analysis.evidence --selftest
 ```
 
+`LLM_TEMPERATURE` defaults to `0` for repeatable verdicts. If the selected model no longer accepts
+that sampling control, the transport adapter retries once without it and uses the model's defaults
+for the rest of the run. Incomplete transport or validation fallbacks remain visible as `UNKNOWN`,
+but are not recorded as durable business-decision memory.
+
 ### Agent modes
 
 The default run is read-only and assesses every pipeline. It stores investigation episodes in

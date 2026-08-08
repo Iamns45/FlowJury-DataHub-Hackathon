@@ -274,6 +274,15 @@ def test_skeptic_block_downgrades_risky_proposal_to_unknown():
     assert result.skeptic_review == review
 
 
+def test_fallback_is_incomplete_and_not_a_completed_business_verdict():
+    evidence = SimpleNamespace(pipeline="failed transport")
+
+    result = agent.fallback_recommendation(evidence, [], "Supervisor call failed")
+
+    assert result.recommendation == "UNKNOWN"
+    assert result.investigation_status == "INCOMPLETE"
+
+
 def test_skeptic_dossier_omits_raw_memory_and_duplicate_audit_trail():
     @dataclass
     class FakeEvidence:

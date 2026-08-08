@@ -70,6 +70,22 @@ def test_memory_retrieves_same_domain_episode():
         memory.close()
 
 
+def test_incomplete_episode_is_preserved_but_excluded_from_recall():
+    with TemporaryDirectory() as directory:
+        memory = InvestigationMemory(Path(directory) / "memory.sqlite3")
+        evidence = base_evidence("failed pipeline")
+        incomplete = recommendation(evidence.pipeline, "UNKNOWN")
+        incomplete.investigation_status = "INCOMPLETE"
+
+        run_id = memory.record(incomplete, evidence, [])
+        recalled = memory.recall(evidence)
+
+        assert memory.contains_run(run_id)
+        assert recalled["episodes"] == []
+        assert recalled["temporal_comparison"]["status"] == "FIRST_SEEN"
+        memory.close()
+
+
 def test_runtime_minutes_are_excluded_from_fingerprint_noise():
     evidence = base_evidence()
     first = replace(evidence, current_runtime_min=10)

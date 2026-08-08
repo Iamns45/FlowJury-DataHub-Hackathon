@@ -31,6 +31,7 @@ class AgentRecommendation:
     risks: List[str]
     next_action: str
     skills_applied: List[str]
+    investigation_status: str = "COMPLETED"
     investigation: List[ToolObservation] = field(default_factory=list)
     temporal_change: Optional[dict] = None
     skeptic_review: Optional[dict] = None
