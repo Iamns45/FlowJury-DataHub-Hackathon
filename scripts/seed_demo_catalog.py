@@ -80,6 +80,8 @@ from datahub.metadata.schema_classes import (
 )
 from datahub.metadata.urns import DatasetUrn
 
+from scripts.add_demo_dag_sources import DAG_SOURCE
+
 # --------------------------------------------------------------------------- #
 # Config
 # --------------------------------------------------------------------------- #
@@ -243,7 +245,9 @@ def emit_pipeline(
         env=ENV,
         name=name,
         description=description,
-        properties={"schedule": schedule_cron},
+        # Keep source clues in the canonical DataFlow aspect so rerunning this idempotent
+        # catalog seeder cannot erase evidence previously added by add_demo_dag_sources.
+        properties={"schedule": schedule_cron, "dag_source": DAG_SOURCE[flow_id]},
         owners={make_user_urn(owner_user)},
         group_owners={make_group_urn(owner_group)},
     )

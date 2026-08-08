@@ -148,19 +148,26 @@ DAG_SOURCE = {
     ),
 }
 
-graph = DataHubGraph(DatahubClientConfig(server=GMS, token=TOKEN))
-emitter = DatahubRestEmitter(gms_server=GMS, token=TOKEN)
 
-for flow_id, code in DAG_SOURCE.items():
-    flow_urn = make_data_flow_urn("airflow", flow_id, "PROD")
-    info = graph.get_aspect(flow_urn, DataFlowInfoClass)
-    if info is None:
-        print("skip (not found):", flow_id)
-        continue
-    props = dict(info.customProperties or {})
-    props["dag_source"] = code
-    info.customProperties = props
-    emitter.emit(MetadataChangeProposalWrapper(entityUrn=flow_urn, aspect=info))
-    print("added dag_source ->", flow_id)
+def main() -> None:
+    """Restore DAG-source properties without replacing other DataFlow metadata."""
+    graph = DataHubGraph(DatahubClientConfig(server=GMS, token=TOKEN))
+    emitter = DatahubRestEmitter(gms_server=GMS, token=TOKEN)
 
-print("\nDone. The agent can now read each pipeline's code via get_dag_source.")
+    for flow_id, code in DAG_SOURCE.items():
+        flow_urn = make_data_flow_urn("airflow", flow_id, "PROD")
+        info = graph.get_aspect(flow_urn, DataFlowInfoClass)
+        if info is None:
+            print("skip (not found):", flow_id)
+            continue
+        props = dict(info.customProperties or {})
+        props["dag_source"] = code
+        info.customProperties = props
+        emitter.emit(MetadataChangeProposalWrapper(entityUrn=flow_urn, aspect=info))
+        print("added dag_source ->", flow_id)
+
+    print("\nDone. The agent can now read each pipeline's code via get_dag_source.")
+
+
+if __name__ == "__main__":
+    main()

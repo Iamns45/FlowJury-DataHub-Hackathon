@@ -29,29 +29,17 @@ from flowjury.settings import (
     DEFAULT_MEMORY_DB,
     DEFAULT_SKILLS_DIR,
 )
+from flowjury.ui import (
+    configure_color,
+    render_assessment_header,
+    render_recommendation,
+    render_run_banner,
+)
 
 
 def print_recommendation(result: AgentRecommendation) -> None:
     """Render one human-readable assessment to stdout."""
-    print(f"\n  RECOMMENDATION: {result.recommendation} ({result.confidence:.2f})")
-    if result.investigation_status != "COMPLETED":
-        print(f"  Status: {result.investigation_status}")
-    print(f"  {result.summary}")
-    print(f"  Skills: {', '.join(result.skills_applied) or '(fallback)'}")
-    for item in result.evidence:
-        print(f"    • [{item['source_tool']}] {item['claim']}: {item['observation']}")
-    if result.risks:
-        print(f"  Risk: {result.risks[0]}")
-    if result.temporal_change:
-        status = result.temporal_change.get("status", "UNKNOWN")
-        changed = [item.get("field") for item in result.temporal_change.get("changed_fields", [])]
-        suffix = f" ({', '.join(changed[:5])})" if changed else ""
-        print(f"  Memory: {status}{suffix}")
-    if result.skeptic_review:
-        print(f"  Skeptic: {result.skeptic_review.get('decision', 'BLOCK')}")
-    if result.memory_id:
-        print(f"  Episode: {result.memory_id}")
-    print(f"  Next: {result.next_action}")
+    print(render_recommendation(result))
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -100,6 +88,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Write separate flowjury_agent_* proposal metadata to DataHub. Never changes jobs.",
     )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable ANSI colors (colors also turn off automatically when output is redirected).",
+    )
     args = parser.parse_args(argv)
     if not 1 <= args.max_supervision_cycles <= 20:
         parser.error("--max-supervision-cycles must be between 1 and 20")
@@ -109,6 +102,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     """Assess every discovered pipeline, or one selected with ``--pipeline``."""
     args = parse_args(argv)
+    if args.no_color:
+        configure_color(False)
     missing_llm = missing_llm_configuration()
     if missing_llm:
         print("Set LLM configuration first: " + ", ".join(missing_llm))
@@ -148,12 +143,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     print(f"Loaded {len(skills)} skill descriptors.")
     print("Memory disabled." if memory is None else f"Memory: {memory.path}")
-    print(f"\n{len(evidence_to_assess)} pipeline(s) — beginning skill-first assessments.\n")
+    print("\n" + render_run_banner(len(evidence_to_assess)))
     results: List[AgentRecommendation] = []
-    for evidence in evidence_to_assess:
-        print("=" * 78)
-        print(f"ASSESSING: {evidence.pipeline}")
-        print("-" * 78)
+    for position, evidence in enumerate(evidence_to_assess, 1):
+        print(
+            render_assessment_header(
+                evidence.pipeline,
+                position,
+                len(evidence_to_assess),
+            )
+        )
         try:
             result = investigate(
                 llm_client,

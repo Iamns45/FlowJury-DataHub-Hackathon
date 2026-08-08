@@ -42,3 +42,9 @@ def test_every_scenario_has_investigable_dag_source():
     assert "FeatureStore" in dag_sources["customer_feature_materialization"]
     assert "jurisdiction_rules" in dag_sources["regional_tax_reconciliation"]
     assert "delete_subject" in dag_sources["gdpr_erasure_propagation"]
+
+
+def test_catalog_seeder_preserves_dag_source_on_every_rerun():
+    source = (ROOT / "scripts" / "seed_demo_catalog.py").read_text(encoding="utf-8")
+
+    assert '"dag_source": DAG_SOURCE[flow_id]' in source

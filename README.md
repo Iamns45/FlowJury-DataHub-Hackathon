@@ -22,8 +22,8 @@ recommending retirement. That proof is what FlowJury produces.
 
 ## What FlowJury does
 
-For every pipeline in DataHub, FlowJury runs one stateful loop — **plan → execute → re-plan →
-challenge risky verdicts** — and
+For every pipeline in DataHub, FlowJury runs one stateful loop — **supervise → execute →
+re-supervise → challenge risky verdicts** — and
 produces one of nine verdicts:
 
 | Verdict | Meaning |
@@ -37,6 +37,9 @@ produces one of nine verdicts:
 | `FIX/FOLD` | Fails repeatedly and unnoticed |
 | `PROTECT` | Compliance, privacy, or retention workflow — never touch |
 | `UNKNOWN` | Not enough evidence to decide safely |
+
+See the [latest 18-pipeline demo result matrix](examples/latest_results.md) for the expected
+outcome and deciding DataHub evidence in every seeded scenario.
 
 ## Four ideas that make it trustworthy
 
@@ -192,6 +195,12 @@ python -m flowjury.analysis.evidence
 python -m flowjury.analysis.evidence --selftest
 ```
 
+Interactive terminals show each result as a color-coded decision card: verdict, rationale,
+skills, evidence, risks, memory, skeptic review, and next action have separate visual sections.
+Colors turn off automatically when output is redirected; use `--no-color` or the standard
+`NO_COLOR` environment variable to disable them explicitly. Structured JSON output never contains
+ANSI formatting.
+
 `LLM_TEMPERATURE` defaults to `0` for repeatable verdicts. If the selected model no longer accepts
 that sampling control, the transport adapter retries once without it and uses the model's defaults
 for the rest of the run. Incomplete transport or validation fallbacks remain visible as `UNKNOWN`,
@@ -206,6 +215,10 @@ must then load relevant specialists and cite only observed evidence. A `KILL` pr
 requires source, downstream lineage, catalog search, and a blast-radius simulation. `KILL` and
 `REDUNDANT` must then pass the independent skeptic node. LangGraph routes invalid or incomplete
 proposals back to the supervisor until the budget is exhausted.
+
+The catalog seeder embeds executable DAG clues directly in every demo DataFlow. The separate
+`scripts.add_demo_dag_sources` command is an idempotent repair utility for an existing catalog whose
+custom properties were created by an older project version.
 
 `scripts/seed_demo_memory.py` makes the first demo run more illustrative by preloading seven
 explicitly historical episodes. It uses current DataHub metadata for each stored snapshot, is

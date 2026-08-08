@@ -42,6 +42,7 @@ from flowjury.settings import (
     MAX_REPAIR_ATTEMPTS,
     RISKY_VERDICTS,
 )
+from flowjury.ui import activity
 
 
 INVESTIGATION_TOOLS = [
@@ -974,7 +975,12 @@ def build_investigation_graph(
         try:
             if repair_mode:
                 attempt = repair_attempts + 1
-                print(f"  🛠 supervisor repairing proposal ({attempt}/{MAX_REPAIR_ATTEMPTS})")
+                print(
+                    activity(
+                        f"  🛠 supervisor repairing proposal " f"({attempt}/{MAX_REPAIR_ATTEMPTS})",
+                        "supervisor",
+                    )
+                )
                 response = llm_client.messages.create(
                     model=LLM_NAME,
                     max_tokens=1200,
@@ -993,7 +999,12 @@ def build_investigation_graph(
                 next_repair_attempts = attempt
                 next_finalization_attempted = finalization_attempted
             elif budget_finalize:
-                print("  🧭 supervision budget reached; forcing final evidence-based proposal")
+                print(
+                    activity(
+                        "  🧭 supervision budget reached; forcing final " "evidence-based proposal",
+                        "warning",
+                    )
+                )
                 response = llm_client.messages.create(
                     model=LLM_NAME,
                     max_tokens=1200,
@@ -1062,7 +1073,7 @@ def build_investigation_graph(
 
         for block in response.content:
             if block.type == "text" and block.text.strip():
-                print(f"  🧠 {block.text.strip()}")
+                print(activity(f"  🧠 {block.text.strip()}", "memory"))
 
         if supervisor_actions:
             names = ", ".join(action["tool"] for action in supervisor_actions)
@@ -1071,7 +1082,7 @@ def build_investigation_graph(
                 if repair_mode
                 else "finalize" if budget_finalize else f"supervise {next_cycles}"
             )
-            print(f"  🧭 {label}: {names}")
+            print(activity(f"  🧭 {label}: {names}", "supervisor"))
         else:
             messages.append(
                 {
@@ -1119,7 +1130,12 @@ def build_investigation_graph(
                 continue
             argument = _argument(block)
             cycle = state.get("supervision_cycles", 0)
-            print(f"  🔍 execute cycle {cycle}: {block.name}({argument!r})")
+            print(
+                activity(
+                    f"  🔍 execute cycle {cycle}: {block.name}({argument!r})",
+                    "executor",
+                )
+            )
             output = dispatch(ctx, skills, memory, evidence, block.name, block.input)
             observations.append(
                 ToolObservation(
@@ -1139,14 +1155,24 @@ def build_investigation_graph(
                     "Submission deferred: read the evidence returned by this executor cycle, "
                     "then submit a supported recommendation in the next supervision cycle."
                 )
-                print("  ↩ proposal deferred until the supervisor reads new evidence")
+                print(
+                    activity(
+                        "  ↩ proposal deferred until the supervisor reads new evidence",
+                        "info",
+                    )
+                )
                 continue
             submission_attempted = True
             candidate_payload, normalized_fields = normalize_submission_payload(
                 dict(block.input), observations
             )
             if normalized_fields:
-                print("  🧱 normalized proposal fields: " + ", ".join(normalized_fields))
+                print(
+                    activity(
+                        "  🧱 normalized proposal fields: " + ", ".join(normalized_fields),
+                        "warning",
+                    )
+                )
             errors = validate_submission(
                 evidence,
                 candidate_payload,
@@ -1160,7 +1186,12 @@ def build_investigation_graph(
                     + "; ".join(errors)
                     + ". Revise the plan or proposal."
                 )
-                print(f"  ⚠ submission rejected: {'; '.join(errors)}")
+                print(
+                    activity(
+                        f"  ⚠ submission rejected: {'; '.join(errors)}",
+                        "warning",
+                    )
+                )
             else:
                 accepted = accepted_proposal(candidate_payload, observations)
                 tool_results[block.id] = "Recommendation accepted."
@@ -1191,7 +1222,7 @@ def build_investigation_graph(
                     )
                 )
                 accepted.investigation = list(observations)
-                print("  ✓ supervisor repair accepted")
+                print(activity("  ✓ supervisor repair accepted", "success"))
             return {
                 "messages": messages,
                 "observations": observations,
@@ -1394,10 +1425,15 @@ def investigate(
                 context=ctx.memory_context(evidence.pipeline),
             )
             result.memory_id = memory_id
-            print(f"  🧠 remembered investigation {memory_id[:8]}")
+            print(activity(f"  🧠 remembered investigation {memory_id[:8]}", "memory"))
         except Exception as exc:
-            print(f"  ⚠ memory write failed: {exc}")
+            print(activity(f"  ⚠ memory write failed: {exc}", "warning"))
     elif memory is not None:
-        print("  ℹ incomplete investigation was not written to durable memory")
+        print(
+            activity(
+                "  ℹ incomplete investigation was not written to durable memory",
+                "info",
+            )
+        )
 
     return result

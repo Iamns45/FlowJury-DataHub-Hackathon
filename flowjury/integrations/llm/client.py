@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from flowjury.ui import activity
+
 
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 LLM_NAME = os.environ.get("LLM_NAME", "")
@@ -51,7 +53,12 @@ class _MessagesAdapter:
                 raise
             self._temperature_supported = False
             request.pop("temperature")
-            print("  ℹ selected model ignores temperature; retrying with model defaults")
+            print(
+                activity(
+                    "  ℹ selected model ignores temperature; retrying with model defaults",
+                    "info",
+                )
+            )
             return self._messages.create(**request)
 
 
