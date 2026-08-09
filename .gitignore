@@ -18,6 +18,7 @@ wheels/
 .env
 *.log
 proposals*.json
+!examples/proposals.json
 .DS_Store
 .flowjury/
 state/

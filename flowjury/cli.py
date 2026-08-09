@@ -19,7 +19,11 @@ from flowjury.agent.context import InvestigationContext
 from flowjury.agent.skills import SkillRegistry
 from flowjury.analysis.evidence import gather_evidence
 from flowjury.integrations.datahub.client import FlowJuryClient
-from flowjury.integrations.datahub.writeback import write_agent_proposal
+from flowjury.integrations.datahub.writeback import (
+    load_proposal_file,
+    write_agent_proposal,
+    write_existing_proposals,
+)
 from flowjury.integrations.llm.client import create_llm_client, missing_llm_configuration
 from flowjury.memory.store import InvestigationMemory
 from flowjury.settings import (
@@ -30,6 +34,7 @@ from flowjury.settings import (
     DEFAULT_SKILLS_DIR,
 )
 from flowjury.ui import (
+    activity,
     configure_color,
     render_assessment_header,
     render_recommendation,
@@ -89,6 +94,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Write separate flowjury_agent_* proposal metadata to DataHub. Never changes jobs.",
     )
     parser.add_argument(
+        "--writeback-json",
+        type=Path,
+        help="Write an existing FlowJury JSON result file to DataHub without rerunning the agent.",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="Disable ANSI colors (colors also turn off automatically when output is redirected).",
@@ -96,7 +106,36 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if not 1 <= args.max_supervision_cycles <= 20:
         parser.error("--max-supervision-cycles must be between 1 and 20")
+    if args.writeback_json and any(
+        (args.pipeline, args.json_out, args.writeback_proposals, args.no_memory)
+    ):
+        parser.error(
+            "--writeback-json is a standalone mode; do not combine it with assessment options"
+        )
     return args
+
+
+def writeback_json(path: Path) -> int:
+    """Write saved recommendations to DataHub without invoking the reasoning graph."""
+    from datahub.emitter.rest_emitter import DatahubRestEmitter
+
+    try:
+        results = load_proposal_file(path)
+        datahub = FlowJuryClient(DATAHUB_GMS_URL, DATAHUB_GMS_TOKEN)
+        emitter = DatahubRestEmitter(
+            gms_server=DATAHUB_GMS_URL,
+            token=DATAHUB_GMS_TOKEN,
+        )
+        report = write_existing_proposals(datahub, emitter, results)
+    except Exception as exc:
+        print(activity(f"⚠ writeback failed: {exc}", "warning"))
+        return 1
+
+    for error in report["errors"]:
+        print(activity(f"  ⚠ {error}", "warning"))
+    written = report["written"]
+    print(activity(f"✓ wrote {written}/{len(results)} saved proposals to DataHub", "success"))
+    return 0 if not report["errors"] else 1
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -104,6 +143,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
     if args.no_color:
         configure_color(False)
+    if args.writeback_json:
+        return writeback_json(args.writeback_json)
     missing_llm = missing_llm_configuration()
     if missing_llm:
         print("Set LLM configuration first: " + ", ".join(missing_llm))
@@ -198,7 +239,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 print(
                     "  ✓ proposal written to DataHub"
                     if written
-                    else "  ⚠ writeback target not found"
+                    else "  ⚠ writeback skipped by safety gate or target not found"
                 )
             except Exception as exc:
                 print(f"  ⚠ proposal writeback failed: {exc}")

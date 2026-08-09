@@ -39,7 +39,9 @@ produces one of nine verdicts:
 | `UNKNOWN` | Not enough evidence to decide safely |
 
 See the [latest 18-pipeline demo result matrix](examples/latest_results.md) for the expected
-outcome and deciding DataHub evidence in every seeded scenario.
+outcome and deciding DataHub evidence in every seeded scenario. Judges can also inspect a
+[complete saved agent run](examples/proposals.json), including cited evidence, risks, memory,
+tool observations, and next actions, without running the project.
 
 ## Four ideas that make it trustworthy
 
@@ -242,6 +244,17 @@ python -m flowjury --skills-dir ./skills-experiment --pipeline "Hourly Inventory
 # Explicitly store the proposal in separate flowjury_agent_* DataHub properties
 python -m flowjury --writeback-proposals
 ```
+
+If the agent already produced a JSON file, write those saved proposals back without running the
+LLM or collecting evidence again:
+
+```bash
+python agent.py --writeback-json proposals.json
+```
+
+The repository includes [`examples/proposals.json`](examples/proposals.json) as a reviewable
+sample artifact. It preserves the full audit trail from a real 18-pipeline run. Write-back skips
+any result marked `INCOMPLETE` and requires a passing skeptic review for `KILL` or `REDUNDANT`.
 
 Proposal write-back adds `FlowJury-Agent-Reviewed` and `FlowJury-Agent-<RECOMMENDATION>` tags.
 It does not disable a schedule or execute the proposed action. If the model fails, skips required
